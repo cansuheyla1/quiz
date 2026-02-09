@@ -1,5 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
-  publicPath: '/quiz-app/',
+  publicPath: '/quiz/',
   transpileDependencies: true
 })
