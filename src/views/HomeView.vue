@@ -14,7 +14,7 @@
           <input type="radio" name="selected" :value="index" v-model="selectedOption">  <!--radio çünkü tek cevap seçiliyor-->
           <label>{{ String.fromCharCode(65 + index) }}- {{ option }}</label>
         </div>
-        <button @click="handleClickTwo(questions[currentIndex].answerIndex)">İleri</button>
+        <button @click="handleClickTwo()">İleri</button>
       </div>
     </div>
 
@@ -28,7 +28,7 @@
 <script>
 // @ is an alias to /src
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'
 
 export default {
   name: 'HomeView',
@@ -39,7 +39,7 @@ export default {
     const selectedOption = ref(null)
     const score = ref(0)
     const currentIndex = ref(0)
-
+    const answers = ref([]);
 
     const handleClick = () => {
       started.value = true
@@ -47,16 +47,36 @@ export default {
       currentIndex.value = 0
       score.value = 0
     }
-    const handleClickTwo = (answer) => {
-      if (selectedOption.value == answer) score.value++
-      if (currentIndex.value >= questions.value.length-1) finished.value = true
-      else currentIndex.value++
-      selectedOption.value = null
+    const handleClickTwo = async () => {
+      if (selectedOption.value == null) return;
+
+      answers.value.push({
+        id: questions.value[currentIndex.value].id,
+        selected: selectedOption.value
+      })
+      if (currentIndex.value >= questions.value.length - 1) {
+        try {
+          const res = await api.post("/quiz/submit", answers.value);
+
+          score.value = res.data.score;
+          finished.value = true;
+        } catch (err) {
+          console.log(err);
+        }
+      } 
+      else {
+        currentIndex.value++;
+      }
+
+      selectedOption.value = null;
     }
 
     onMounted(() => {
-      axios.get("http://localhost:3000/questions")
-      .then(res => questions.value = res.data)
+      console.log("API BASE:", api.defaults.baseURL);
+      api.get("/questions?count=10")
+      .then(res => {questions.value = res.data
+        console.log("questions response:", res.data);
+      })
       .catch(err => console.log(err))
     })
 
